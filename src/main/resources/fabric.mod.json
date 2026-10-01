@@ -1,19 +1,22 @@
 {
-  "schemaVersion": 1,
-  "id": "modswitcher",
-  "version": "${version}",
-  "name": "Mod Switcher",
-  "description": "Adds a Mod Switcher button to the title and pause menus. Browse loaded mods page by page and queue mods to be disabled or re-enabled on the next launch.",
-  "authors": ["Mod Switcher"],
+  "schema_version": 1,
+  "id": "mycombatmod",
+  "version": "1.0.0",
+  "name": "Dynamic Combat Overhaul",
+  "description": "Adds advanced weapon combos and dynamic strike animations.",
+  "authors": ["HabibiChacha"],
+  "contact": {},
   "license": "MIT",
-  "environment": "client",
+  "icon": "assets/mycombatmod/icon.png",
+  "environment": "*",
   "entrypoints": {
-    "client": ["com.modswitcher.ModSwitcherClient"]
+    "main": [
+      "com.example.combat.CombatMod"
+    ]
   },
   "depends": {
-    "fabricloader": ">=0.16.0",
-    "minecraft": "~1.21.11",
-    "java": ">=21",
-    "fabric-api": "*"
+    "fabricloader": ">=0.14.21",
+    "minecraft": "1.21",
+    "java": ">=17"
   }
 }
