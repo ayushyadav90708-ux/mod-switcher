@@ -1,6 +1,8 @@
 package com.modswitcher;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +28,7 @@ public final class PendingChanges {
     private static final String SUFFIX = ".disabled";
     private static final Map<Path, Action> PENDING = new LinkedHashMap<>();
     private static boolean hookRegistered;
+    private static volatile boolean relaunchRequested;
 
     private PendingChanges() {}
 
@@ -68,6 +72,100 @@ public final class PendingChanges {
         return out;
     }
 
+    /** Ask for the game to be started again automatically once it has closed (experimental). */
+    public static synchronized void requestRelaunch() {
+        relaunchRequested = true;
+        registerHook();
+    }
+
+    /** True if this launcher setup lets us rebuild the game's start command. */
+    public static boolean canRelaunch() {
+        return buildRelaunchCommand() != null && ownJar() != null;
+    }
+
+    private static Path ownJar() {
+        try {
+            return FabricLoader.getInstance().getModContainer("modswitcher")
+                    .map(c -> c.getOrigin().getPaths())
+                    .filter(paths -> !paths.isEmpty())
+                    .map(paths -> paths.get(0).toAbsolutePath())
+                    .filter(p -> Files.isRegularFile(p))
+                    .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String javaExecutable() {
+        try {
+            String fromProcess = ProcessHandle.current().info().command().orElse(null);
+            if (fromProcess != null && new File(fromProcess).isFile()) {
+                return fromProcess;
+            }
+        } catch (Exception ignored) {
+            // fall through to java.home
+        }
+        boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        return System.getProperty("java.home") + File.separator + "bin" + File.separator + (windows ? "java.exe" : "java");
+    }
+
+    /** Rebuilds "java <jvm args> -cp <classpath> <main class> <game args>" or returns null if that is not possible. */
+    private static List<String> buildRelaunchCommand() {
+        try {
+            String sun = System.getProperty("sun.java.command", "");
+            String mainClass = sun.isEmpty() ? "" : sun.split(" ")[0];
+            String classPath = System.getProperty("java.class.path", "");
+            if (mainClass.isEmpty() || mainClass.endsWith(".jar") || classPath.isEmpty()) {
+                return null;
+            }
+            List<String> cmd = new ArrayList<>();
+            cmd.add(javaExecutable());
+            cmd.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
+            cmd.add("-cp");
+            cmd.add(classPath);
+            cmd.add(mainClass);
+            for (String arg : FabricLoader.getInstance().getLaunchArguments(false)) {
+                cmd.add(arg);
+            }
+            return cmd;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static boolean launchRelauncher(Map<Path, Action> snapshot) {
+        try {
+            List<String> command = buildRelaunchCommand();
+            Path modJar = ownJar();
+            if (command == null || modJar == null) {
+                return false;
+            }
+            List<String> plan = new ArrayList<>();
+            plan.add(Long.toString(ProcessHandle.current().pid()));
+            plan.add(Path.of("").toAbsolutePath().toString());
+            for (Map.Entry<Path, Action> e : snapshot.entrySet()) {
+                Path to = targetFor(e.getKey(), e.getValue());
+                if (to != null) {
+                    plan.add("MOVE\t" + e.getKey().toAbsolutePath() + "\t" + to.toAbsolutePath());
+                }
+            }
+            for (String c : command) {
+                plan.add("CMD\t" + c);
+            }
+            Path planFile = Files.createTempFile("modswitcher-plan-", ".txt");
+            Files.write(planFile, plan, StandardCharsets.UTF_8);
+            new ProcessBuilder(javaExecutable(), "-cp", modJar.toString(),
+                    "com.modswitcher.Relauncher", planFile.toString())
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .start();
+            return true;
+        } catch (Exception ex) {
+            LOGGER.error("Could not start the relaunch helper", ex);
+            return false;
+        }
+    }
+
     private static void registerHook() {
         if (hookRegistered) {
             return;
@@ -91,6 +189,9 @@ public final class PendingChanges {
         Map<Path, Action> snapshot;
         synchronized (PendingChanges.class) {
             snapshot = new LinkedHashMap<>(PENDING);
+        }
+        if (relaunchRequested && launchRelauncher(snapshot)) {
+            return;
         }
         if (snapshot.isEmpty()) {
             return;

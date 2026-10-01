@@ -29,7 +29,7 @@ public class ModSwitcherScreen extends Screen {
     @Override
     protected void init() {
         entries = showDisabledView ? ModScanner.disabledMods() : ModScanner.loadedMods(showLibraries);
-        perPage = MathHelper.clamp((height - LIST_TOP - 62) / ROW_HEIGHT, 2, 8);
+        perPage = MathHelper.clamp((height - LIST_TOP - 88) / ROW_HEIGHT, 2, 8);
         int pages = pageCount();
         page = MathHelper.clamp(page, 0, pages - 1);
 
@@ -77,14 +77,26 @@ public class ModSwitcherScreen extends Screen {
         addDrawableChild(next);
 
         if (PendingChanges.hasAny()) {
+            int actionY = height - 76;
+            ButtonWidget restart = ButtonWidget.builder(Text.literal("Restart Game"), b -> {
+                PendingChanges.requestRelaunch();
+                client.scheduleStop();
+            }).dimensions(left, actionY, 124, 20)
+                    .tooltip(Tooltip.of(Text.literal("Closes Minecraft, applies the changes, then tries to reopen it automatically (experimental).")))
+                    .build();
+            restart.active = PendingChanges.canRelaunch();
+            if (!restart.active) {
+                restart.setTooltip(Tooltip.of(Text.literal("Automatic restart is not possible with this launcher. Use Quit Game and start Minecraft again.")));
+            }
+            addDrawableChild(restart);
             addDrawableChild(ButtonWidget.builder(Text.literal("Quit Game"), b -> client.scheduleStop())
-                    .dimensions(left, navY, 110, 20)
-                    .tooltip(Tooltip.of(Text.literal("Closes Minecraft now so the queued changes are applied. Start it again afterwards.")))
+                    .dimensions(left + 128, actionY, 92, 20)
+                    .tooltip(Tooltip.of(Text.literal("Closes Minecraft so the changes are applied. Start it again yourself afterwards.")))
                     .build());
             addDrawableChild(ButtonWidget.builder(Text.literal("Clear Changes"), b -> {
                 PendingChanges.clear();
                 clearAndInit();
-            }).dimensions(left + ROW_WIDTH - 110, navY, 110, 20).build());
+            }).dimensions(left + 224, actionY, 96, 20).build());
         }
 
         int bottomY = height - 28;

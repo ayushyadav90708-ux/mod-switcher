@@ -12,7 +12,11 @@ Client-side mod. Mod id `modswitcher`, version `1.0.0`. Needs Fabric Loader, Fab
   (or back to `.jar`). On Windows the jar is locked until the game is gone, so a small temporary script finishes the rename.
 - **View: Disabled** lists jars already disabled in the mods folder so you can queue them for re-enabling.
 - **Libraries: Shown/Hidden** reveals built-in and bundled library mods. They are always locked.
+- **Restart Game** (experimental) closes Minecraft, applies the changes, then starts it again with the same settings.
+  It rebuilds the game's launch command, so it may not work with every launcher; if the game does not reopen, just start it yourself.
 - **Quit Game** closes Minecraft so the changes apply; **Clear Changes** cancels the queue.
+- Why not reload instantly like resource packs? Resource packs are only assets and can be re-read at any time. Mods are Java code that
+  Fabric loads once at startup, and there is no safe way to unload or add them in a running game.
 
 ## Safety rules
 
