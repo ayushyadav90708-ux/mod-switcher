@@ -6,7 +6,6 @@ import com.example.noteblocksongs.server.NbsServerState;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
@@ -14,7 +13,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.Arrays;
 
 public final class NbsNetworking {
     public static final CustomPayload.Id<PlayRequest> PLAY_REQUEST_ID = new CustomPayload.Id<>(Identifier.of(NoteBlockSongs.MOD_ID,"play_request"));

@@ -58,3 +58,10 @@ This avoids making every client independently search its own Songs folder and al
 
 ## Legal / privacy
 Only transfer audio files that you have permission to distribute to other players on the server. The mod intentionally sends the initiating player's selected MP3 to the server so that other modded clients can hear it.
+
+
+## GitHub build
+
+This project includes `.github/workflows/build.yml`. Push the repository to GitHub, open **Actions**, run **Build Note Block Songs**, and download the `note-block-songs-jar` artifact from the completed workflow. The workflow installs Java 21 and Gradle 9.2.1 automatically.
+
+For Minecraft 1.21.11, the project uses Yarn `1.21.11+build.5`, Fabric Loader `0.18.2`, Fabric API `0.141.3+1.21.11`, and Fabric Loom 1.14. Fabric documents 1.21.11 as the last obfuscated Minecraft release and recommends Loom 1.14 for it.
