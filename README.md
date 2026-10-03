@@ -1,65 +1,60 @@
-# Note Block Songs
+# Note Block Songs 1.0.0
 
-Fabric mod for Minecraft Java Edition 1.21.11.
+Fabric mod for Minecraft Java Edition **1.21.11**. It adds an MP3 library to Note Blocks and synchronizes the selected audio through the modded Minecraft server.
 
-## What it does
+## Important version note
+Minecraft 1.21 through 1.21.11 are not one binary-compatible mod target. Fabric confirms that 1.21.11 is the last obfuscated release and that 26.1+ is a different, unobfuscated toolchain. This project therefore targets **1.21.11 explicitly** rather than falsely claiming that one JAR works across every 1.21.x release. Older 1.21.x ports require their own version-specific mappings/API build. See `VERSIONS.md`.
 
+## Features
 - Creates `.minecraft/Songs/` automatically.
-- Detects `.mp3` files.
-- Right-clicking a Note Block opens the Songs screen.
-- The selected MP3 is decoded locally with JLayer.
-- The player sends the selected MP3 bytes to the logical server.
-- The server validates the filename/size and broadcasts the audio to nearby modded clients.
-- Receiving clients cache the MP3 bytes and play the song from the Note Block position.
-- Playback has a configurable distance and volume.
-
-## Important multiplayer behavior
-
-Every listener must have the mod installed. They do **not** need to already have the MP3 in their own Songs folder: the server sends the audio bytes to nearby modded clients and those clients cache/play it.
-
-This implementation intentionally limits transfers to 20 MiB and rejects unsupported/oversized files.
+- Scans MP3 files when the Songs screen opens or Refresh is pressed.
+- Right-click a Note Block to open the **Songs** GUI.
+- Search, scrollable song list, Play, Stop, Refresh and volume slider.
+- The initiating client uploads the selected MP3 to the server only when the server does not already have that content hash.
+- Server stores a cache keyed by SHA-256 and distributes it to nearby modded clients.
+- Clients cache received MP3s locally and do not repeatedly transfer the same file.
+- Positional playback at the Note Block with linear attenuation and configurable range.
+- Server-side size, upload, active-source, range and chunk limits.
+- Playback is stopped when the Note Block is broken or disappears.
 
 ## Build
+Requires JDK 21. The project uses Fabric Loom 1.14, Fabric Loader 0.18.1 and Fabric API 0.141.3+1.21.11.
 
-Use Java 21.
+If Gradle is installed:
 
 ```text
-./gradlew build
+gradle build
 ```
 
-The remapped JAR is produced in:
+If using the supplied bootstrap scripts, run `gradlew.bat build` on Windows or `./gradlew build` on Linux/macOS. The bootstrap downloads the Gradle distribution when necessary. The official Gradle wrapper JAR is intentionally not vendored by this generated package; after the first successful Gradle installation you can run `gradle wrapper --gradle-version 8.10.2` to generate the conventional wrapper files.
 
-`build/libs/note-block-songs-1.0.0.jar`
+The production JAR is created under `build/libs/` and is the JAR without the `-dev` classifier.
 
-Put the JAR in the Fabric `mods` folder.
+## Install
+1. Install Fabric Loader for Minecraft 1.21.11.
+2. Install Fabric API for 1.21.11.
+3. Put the built `note-block-songs-1.0.0.jar` into the client's `mods` folder.
+4. For multiplayer, the **server must also have the same mod installed**. This is required because the server validates uploads, stores the cache and relays synchronized playback.
+5. Launch Minecraft. The mod creates `.minecraft/Songs/` automatically.
+6. Put MP3 files in that folder.
+7. Right-click a Note Block and choose a song.
 
-## Songs folder
+## Limits / configuration
+Edit `config/note_block_songs.json` after first launch:
+- `max_file_size_mb`: maximum MP3 upload size, default 16 MB.
+- `max_duration_seconds`: documented policy limit; MP3 uploads are rejected if their estimated duration is clearly above the limit.
+- `max_transfer_bytes_per_second`: per-player upload budget.
+- `max_active_sources`: maximum simultaneous Note Block sources per server.
+- `max_playback_range`: maximum allowed source range.
+- `cache_limit_mb`: server-side cache size.
+- `volume`: local master volume multiplier.
 
-The mod creates:
+The client and server use the same JSON file format, but server-side values are authoritative for network safety.
 
-`.minecraft/Songs/`
+## Protocol
+`PlayRequest` -> server validates the block and requested hash. If the server cache is missing, the server asks the initiating client for an upload. The server stores the bytes by SHA-256, then broadcasts a `PlayStart`. Clients missing the cache request it with `DownloadRequest`; the server sends bounded chunks. A `Stop` packet is sent when playback is stopped or the source block is gone.
 
-Put MP3 files there.
+This avoids making every client independently search its own Songs folder and allows players without the original MP3 to hear the song.
 
-## Version support
-
-This repository is a real 1.21.11 build. Minecraft 1.21 through 1.21.10 require their own version-specific Fabric/Loom/mappings builds because Minecraft/Fabric APIs changed during the 1.21 release line.
-
-Do not put this 1.21.11 JAR into another Minecraft version.
-
-The intended porting targets are:
-
-1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11.
-
-## Security
-
-The server checks:
-
-- file extension
-- canonical path stays inside Songs
-- maximum file size
-- playback range
-- number of active songs per player
-- packet/request structure
-
-For a public server, consider adding an operator-only permission for song playback. The current build uses an application-level 20 MiB limit and Fabric large-payload registration; production deployments may want a smaller configurable limit.
+## Legal / privacy
+Only transfer audio files that you have permission to distribute to other players on the server. The mod intentionally sends the initiating player's selected MP3 to the server so that other modded clients can hear it.
