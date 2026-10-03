@@ -1,32 +1,65 @@
-# Mod Switcher (Fabric, Minecraft Java 1.21.11)
+# Note Block Songs
 
-Client-side mod. Mod id `modswitcher`, version `1.0.0`. Needs Fabric Loader, Fabric API and Java 21.
+Fabric mod for Minecraft Java Edition 1.21.11.
 
 ## What it does
 
-- Adds a **Mod Switcher** button (top-left) to the **title screen** and the **pause menu**.
-- Opens a **paged list of loaded mods** (name, id, version).
-- **Disable / Enable** buttons queue a change. **Nothing changes in the running game**:
-  Fabric cannot safely unload mods mid-session, so every change needs a **restart**. The screen says so in orange at the top.
-- Queued changes are applied when the game **closes**: the mod's jar is renamed to `<name>.jar.disabled`
-  (or back to `.jar`). On Windows the jar is locked until the game is gone, so a small temporary script finishes the rename.
-- **View: Disabled** lists jars already disabled in the mods folder so you can queue them for re-enabling.
-- **Libraries: Shown/Hidden** reveals built-in and bundled library mods. They are always locked.
-- **Restart Game** (experimental) closes Minecraft, applies the changes, then starts it again with the same settings.
-  It rebuilds the game's launch command, so it may not work with every launcher; if the game does not reopen, just start it yourself.
-- **Quit Game** closes Minecraft so the changes apply; **Clear Changes** cancels the queue.
-- Why not reload instantly like resource packs? Resource packs are only assets and can be re-read at any time. Mods are Java code that
-  Fabric loads once at startup, and there is no safe way to unload or add them in a running game.
+- Creates `.minecraft/Songs/` automatically.
+- Detects `.mp3` files.
+- Right-clicking a Note Block opens the Songs screen.
+- The selected MP3 is decoded locally with JLayer.
+- The player sends the selected MP3 bytes to the logical server.
+- The server validates the filename/size and broadcasts the audio to nearby modded clients.
+- Receiving clients cache the MP3 bytes and play the song from the Note Block position.
+- Playback has a configurable distance and volume.
 
-## Safety rules
+## Important multiplayer behavior
 
-- A mod that another loaded mod depends on is locked ("Required by: ...") until those mods are queued for disabling first,
-  so the game cannot be left unable to start. Undo works the same way in reverse.
-- Mod Switcher cannot disable itself. Built-in and bundled mods are locked.
-- Only plain `.jar` files directly inside the `mods` folder are touched.
+Every listener must have the mod installed. They do **not** need to already have the MP3 in their own Songs folder: the server sends the audio bytes to nearby modded clients and those clients cache/play it.
 
-## Build with no software installed
+This implementation intentionally limits transfers to 20 MiB and rejects unsupported/oversized files.
 
-Same as any GitHub Actions project: upload these files to a new GitHub repository (include the `.github/workflows/build.yml` file),
-open the **Actions** tab, wait for the green check, download the **modswitcher-1.0.0** artifact and unzip it to get `modswitcher-1.0.0.jar`.
-Put the jar in `.minecraft/mods` with Fabric API.
+## Build
+
+Use Java 21.
+
+```text
+./gradlew build
+```
+
+The remapped JAR is produced in:
+
+`build/libs/note-block-songs-1.0.0.jar`
+
+Put the JAR in the Fabric `mods` folder.
+
+## Songs folder
+
+The mod creates:
+
+`.minecraft/Songs/`
+
+Put MP3 files there.
+
+## Version support
+
+This repository is a real 1.21.11 build. Minecraft 1.21 through 1.21.10 require their own version-specific Fabric/Loom/mappings builds because Minecraft/Fabric APIs changed during the 1.21 release line.
+
+Do not put this 1.21.11 JAR into another Minecraft version.
+
+The intended porting targets are:
+
+1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.9, 1.21.10, 1.21.11.
+
+## Security
+
+The server checks:
+
+- file extension
+- canonical path stays inside Songs
+- maximum file size
+- playback range
+- number of active songs per player
+- packet/request structure
+
+For a public server, consider adding an operator-only permission for song playback. The current build uses an application-level 20 MiB limit and Fabric large-payload registration; production deployments may want a smaller configurable limit.

@@ -1,22 +1,23 @@
 {
-  "schema_version": 1,
-  "id": "mycombatmod",
-  "version": "1.0.0",
-  "name": "Dynamic Combat Overhaul",
-  "description": "Adds advanced weapon combos and dynamic strike animations.",
-  "authors": ["HabibiChacha"],
-  "contact": {},
-  "license": "MIT",
-  "icon": "assets/mycombatmod/icon.png",
+  "schemaVersion": 1,
+  "id": "noteblocksongs",
+  "version": "${version}",
+  "name": "Note Block Songs",
+  "description": "Play synchronized MP3 songs from Note Blocks.",
+  "authors": ["Note Block Songs"],
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.example.combat.CombatMod"
+      "com.noteblocksongs.NoteBlockSongs"
+    ],
+    "client": [
+      "com.noteblocksongs.client.NoteBlockSongsClient"
     ]
   },
   "depends": {
-    "fabricloader": ">=0.14.21",
-    "minecraft": "1.21",
-    "java": ">=17"
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "fabric-api": ">=0.141.1+1.21.11",
+    "java": ">=21"
   }
 }
