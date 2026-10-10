@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.pvpaibot.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ChatInputMixin",
+    "ClientPlayerEntityMixin",
+    "MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

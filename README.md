@@ -1,67 +1,129 @@
-# Note Block Songs 1.0.0
+# PvP AI Bot – Fabric 1.21.11
 
-Fabric mod for Minecraft Java Edition **1.21.11**. It adds an MP3 library to Note Blocks and synchronizes the selected audio through the modded Minecraft server.
+A **client-side** Minecraft Java Edition mod that provides an AI-controlled combat assistant.  
+The bot can automatically fight a selected nearby player using your character and the items in your inventory.
 
-## Important version note
-Minecraft 1.21 through 1.21.11 are not one binary-compatible mod target. Fabric confirms that 1.21.11 is the last obfuscated release and that 26.1+ is a different, unobfuscated toolchain. This project therefore targets **1.21.11 explicitly** rather than falsely claiming that one JAR works across every 1.21.x release. Older 1.21.x ports require their own version-specific mappings/API build. See `VERSIONS.md`.
+> **Intended use:** singleplayer and private practice environments.  
+> Multiplayer automation is **disabled by default** and must be explicitly enabled in code only when the server permits it.
 
 ## Features
-- Creates `.minecraft/Songs/` automatically.
-- Scans MP3 files when the Songs screen opens or Refresh is pressed.
-- Right-click a Note Block to open the **Songs** GUI.
-- Search, scrollable song list, Play, Stop, Refresh and volume slider.
-- The initiating client uploads the selected MP3 to the server only when the server does not already have that content hash.
-- Server stores a cache keyed by SHA-256 and distributes it to nearby modded clients.
-- Clients cache received MP3s locally and do not repeatedly transfer the same file.
-- Positional playback at the Note Block with linear attenuation and configurable range.
-- Server-side size, upload, active-source, range and chunk limits.
-- Playback is stopped when the Note Block is broken or disappears.
 
-## Build
-Requires JDK 21. The project uses Fabric Loom 1.14, Fabric Loader 0.18.1 and Fabric API 0.141.3+1.21.11.
+- Chat commands: `#PVP <PlayerName>`, `#PVP OFF`, `#PVP STATUS`
+- Commands are intercepted locally and never sent to the server
+- Target tracking among loaded players
+- Smooth camera aiming
+- Movement toward target while maintaining melee distance
+- Attacks respect vanilla attack-cooldown mechanics
+- Automatic selection of the best sword/axe in the hotbar
+- Auto-eat when health or hunger is low
+- Graceful stop on target loss, death, disconnect, or world unload
+- Modular architecture ready for future inventory / potion / shield expansions
 
-If Gradle is installed:
+## Requirements
 
-```text
-gradle build
+| Component        | Version          |
+|------------------|------------------|
+| Minecraft        | 1.21.11          |
+| Fabric Loader    | ≥ 0.18.4         |
+| Fabric API       | 0.141.x+1.21.11  |
+| Java             | 21               |
+
+## Installation
+
+1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft 1.21.11.
+2. Download the latest `pvp-ai-*.jar` from the Releases page (or build it yourself).
+3. Place the JAR in your `.minecraft/mods` folder together with Fabric API.
+4. Launch the game with the Fabric profile.
+
+## Commands
+
+Type these in chat (they will **not** be sent to the server):
+
+| Command              | Description                              |
+|----------------------|------------------------------------------|
+| `#PVP PlayerName`    | Activate the bot and target that player  |
+| `#PVP OFF`           | Stop the bot immediately                 |
+| `#PVP STATUS`        | Show whether the bot is active and who it is targeting |
+
+## Building from source
+
+```bash
+git clone https://github.com/example/pvp-ai.git
+cd pvp-ai
+./gradlew build
 ```
 
-If using the supplied bootstrap scripts, run `gradlew.bat build` on Windows or `./gradlew build` on Linux/macOS. The bootstrap downloads the Gradle distribution when necessary. The official Gradle wrapper JAR is intentionally not vendored by this generated package; after the first successful Gradle installation you can run `gradle wrapper --gradle-version 8.10.2` to generate the conventional wrapper files.
+The compiled JAR will be in `build/libs/`.
 
-The production JAR is created under `build/libs/` and is the JAR without the `-dev` classifier.
+### Development environment
 
-## Install
-1. Install Fabric Loader for Minecraft 1.21.11.
-2. Install Fabric API for 1.21.11.
-3. Put the built `note-block-songs-1.0.0.jar` into the client's `mods` folder.
-4. For multiplayer, the **server must also have the same mod installed**. This is required because the server validates uploads, stores the cache and relays synchronized playback.
-5. Launch Minecraft. The mod creates `.minecraft/Songs/` automatically.
-6. Put MP3 files in that folder.
-7. Right-click a Note Block and choose a song.
+```bash
+./gradlew runClient
+```
 
-## Limits / configuration
-Edit `config/note_block_songs.json` after first launch:
-- `max_file_size_mb`: maximum MP3 upload size, default 16 MB.
-- `max_duration_seconds`: documented policy limit; MP3 uploads are rejected if their estimated duration is clearly above the limit.
-- `max_transfer_bytes_per_second`: per-player upload budget.
-- `max_active_sources`: maximum simultaneous Note Block sources per server.
-- `max_playback_range`: maximum allowed source range.
-- `cache_limit_mb`: server-side cache size.
-- `volume`: local master volume multiplier.
+## Configuration
 
-The client and server use the same JSON file format, but server-side values are authoritative for network safety.
+Runtime options live in `com.pvpaibot.config.ModConfig`:
 
-## Protocol
-`PlayRequest` -> server validates the block and requested hash. If the server cache is missing, the server asks the initiating client for an upload. The server stores the bytes by SHA-256, then broadcasts a `PlayStart`. Clients missing the cache request it with `DownloadRequest`; the server sends bounded chunks. A `Stop` packet is sent when playback is stopped or the source block is gone.
+- `maxPursueDistance` – max blocks the bot will chase
+- `preferredMeleeRange` / `minMeleeRange`
+- `aimSmoothness`
+- `allowMultiplayer` – **false by default**
+- `autoSelectWeapon`, `autoEat`, thresholds, etc.
 
-This avoids making every client independently search its own Songs folder and allows players without the original MP3 to hear the song.
+A JSON config file loader can be added later; currently defaults are hard-coded for safety.
 
-## Legal / privacy
-Only transfer audio files that you have permission to distribute to other players on the server. The mod intentionally sends the initiating player's selected MP3 to the server so that other modded clients can hear it.
+## Project structure
 
+```
+pvp-ai/
+├── build.gradle / settings.gradle / gradle.properties
+├── src/main/java/com/pvpaibot/
+│   ├── PvpAiClient.java          – mod entry point
+│   ├── command/PvpCommandHandler.java
+│   ├── combat/
+│   │   ├── CombatController.java
+│   │   ├── TargetTracker.java
+│   │   ├── AimController.java
+│   │   └── MovementController.java
+│   ├── inventory/InventoryManager.java
+│   ├── config/ModConfig.java
+│   └── mixin/                    – chat intercept & safety hooks
+└── src/main/resources/
+    ├── fabric.mod.json
+    └── pvp-ai.mixins.json
+```
 
-## GitHub build
+## Completed features
 
-This project includes `.github/workflows/build.yml`. Push the repository to GitHub, open **Actions**, run **Build Note Block Songs**, and download the `note-block-songs-jar` artifact from the completed workflow. The workflow installs Java 21 and Gradle 9.2.1 automatically.
+- [x] Chat command system with local interception
+- [x] Target selection & tracking
+- [x] Smooth aim
+- [x] Movement / distance maintenance
+- [x] Vanilla-cooldown-aware attacking
+- [x] Best melee weapon selection (hotbar swords & axes)
+- [x] Auto-eat on low health/hunger
+- [x] Stop on target loss / death / disconnect
+- [x] Multiplayer disabled by default
+- [x] Gradle build + GitHub Actions workflow
 
-For Minecraft 1.21.11, the project uses Yarn `1.21.11+build.5`, Fabric Loader `0.18.2`, Fabric API `0.141.3+1.21.11`, and Fabric Loom 1.14. Fabric documents 1.21.11 as the last obfuscated Minecraft release and recommends Loom 1.14 for it.
+## Limitations / future work
+
+- Shield auto-block timing is not implemented (detection only).
+- Armor auto-equip and potion auto-use are scaffolded but not fully automated.
+- No pathfinding around obstacles (simple directional movement).
+- No critical-hit or advanced combo logic.
+- Mixin method names for player-remove / disconnect are soft (`require = 0`); the tick-based safety net still stops the bot reliably.
+- Icon placeholder (`assets/pvp-ai/icon.png`) is missing; the mod still loads without it.
+
+## Safety & ethics
+
+This mod uses only ordinary client controls and Minecraft client APIs.  
+It does **not** implement anti-cheat bypasses, packet spoofing, or hidden automation.
+
+Use only in environments where automated combat is allowed (singleplayer, private servers that have given explicit permission).  
+Using automation on public multiplayer servers may violate their rules and can result in bans.
+
+## License
+
+MIT – see [LICENSE](LICENSE).

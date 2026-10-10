@@ -1,20 +1,34 @@
 {
   "schemaVersion": 1,
-  "id": "note_block_songs",
+  "id": "pvp-ai",
   "version": "${version}",
-  "name": "Note Block Songs",
-  "description": "Play synchronized MP3 songs from Note Blocks.",
-  "authors": ["Note Block Songs"],
-  "contact": {},
-  "license": "MIT",
-  "environment": "*",
-  "entrypoints": {
-    "main": ["com.example.noteblocksongs.NoteBlockSongs"],
-    "client": ["com.example.noteblocksongs.client.NoteBlockSongsClient"]
+  "name": "PvP AI Bot",
+  "description": "Client-side AI-controlled combat assistant for Minecraft. Automatically fights a selected player using your character and inventory items. Designed for singleplayer and private practice environments.",
+  "authors": [
+    "PvP AI Contributors"
+  ],
+  "contact": {
+    "homepage": "https://github.com/example/pvp-ai",
+    "sources": "https://github.com/example/pvp-ai"
   },
+  "license": "MIT",
+  "icon": "assets/pvp-ai/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.pvpaibot.PvpAiClient"
+    ]
+  },
+  "mixins": [
+    "pvp-ai.mixins.json"
+  ],
   "depends": {
-    "fabricloader": ">=0.18.2",
-    "minecraft": "1.21.11",
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
   }
 }
