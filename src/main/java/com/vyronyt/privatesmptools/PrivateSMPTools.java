@@ -49,7 +49,7 @@ public final class PrivateSMPTools extends JavaPlugin {
         long ready = lastDupe.getOrDefault(p.getUniqueId(), 0L) + cooldown;
         if (now < ready) {
             p.sendMessage(color(getConfig().getString("messages.cooldown", "&cCooldown.")
-                    .replace("%seconds%", String.valueOf(Math.max(1, (ready - now + 999) / 1000))));
+                    .replace("%seconds%", String.valueOf(Math.max(1, (ready - now + 999) / 1000)))));
             return true;
         }
         ItemStack held = p.getInventory().getItemInMainHand();

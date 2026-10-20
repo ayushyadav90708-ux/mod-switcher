@@ -31,3 +31,11 @@ Paper API artifact version in `pom.xml` targets `1.21.11-R0.1-SNAPSHOT`; buildin
 5. Extract the downloaded artifact ZIP; it contains `PrivateSMPTools-1.0.0.jar`.
 
 The GitHub workflow builds the source; it does not grant OP or hide plugin activity. The server owner must explicitly grant the relevant permissions.
+
+
+### Permission setup
+
+The plugin does not grant OP automatically. The configured name/UUID allowlist is not enough on its own: the player must also have the relevant Bukkit permissions. A server owner can grant them using a permissions plugin such as LuckPerms, or OP them through the normal server controls. Grant only to accounts the owner explicitly approves.
+
+- `privatesmptools.dupe` — use `/dupe`
+- `privatesmptools.admin` — use `/smpadmin`
