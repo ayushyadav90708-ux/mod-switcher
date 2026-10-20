@@ -1,0 +1,15 @@
+# Configure the server owner's explicitly authorized accounts here.
+# UUIDs are preferred to names because usernames can change.
+authorized-uuids: []
+# Optional name allowlist for setup convenience. Prefer UUID authorization.
+authorized-names:
+  - VyronYT
+dupe:
+  cooldown-seconds: 2
+  max-amount: 64
+messages:
+  no-permission: '&cYou are not authorized to use this command.'
+  dupe-success: '&aDuplicated &f%amount%x %item%&a.'
+  dupe-empty: '&cHold an item in your main hand first.'
+  dupe-full: '&cNot enough inventory space; nothing was duplicated.'
+  cooldown: '&cWait %seconds%s before using /dupe again.'

@@ -1,0 +1,22 @@
+name: PrivateSMPTools
+version: 1.0.0
+main: com.vyronyt.privatesmptools.PrivateSMPTools
+api-version: '1.21.11'
+author: VyronYT
+description: Owner-authorized private SMP utility commands and held-item duplication.
+commands:
+  dupe:
+    description: Duplicate the item held in your main hand.
+    usage: /dupe [amount]
+    permission: privatesmptools.dupe
+  smpadmin:
+    description: Authorized private SMP utility commands.
+    usage: /smpadmin <creative|survival|vanish|fly|reload>
+    permission: privatesmptools.admin
+permissions:
+  privatesmptools.dupe:
+    description: Allows use of /dupe.
+    default: op
+  privatesmptools.admin:
+    description: Allows use of /smpadmin commands.
+    default: op
